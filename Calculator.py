@@ -94,7 +94,7 @@ with col4:
     # Max BC Price baseado no inventário não faz tanto sentido quanto na experimentação, 
     # mas mantivemos a lógica de ROI baseada no custo unitário de energia
     roi_bc = (best_profit_inv / 22) * 95 if total_crafts_inv > 0 else 0 
-    st.metric("Ref. Preço Blue Crystal", f"{roi_bc:,.0f}", help="Valor baseado nos itens coletados e lucro potencial. Ou seja se esse valor for maior que o preço do BC, vale a pena comprar energia.")
+    st.metric("Ref. Preço Blue Crystal", f"{roi_bc:,.0f}", help="Valor baseado nos itens coletados e lucro potencial. Ou seja se esse valor for maior que o preço do BC atual, vale a pena comprar energia. Pois seu break-even está acima do preço atual.")
 with col5:
     st.metric("Vale apena comprar poção de energia?", "✅ SIM" if roi_bc > bc_price else "❌ NÃO", help="Baseado no ROI estimado.")
 
