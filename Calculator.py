@@ -14,10 +14,10 @@ with st.sidebar:
     
     # Preços Blue Crystal e Energia
     bc_price = st.number_input("Preço Blue Crystal (95un)", value=14000, step=100)
-    oreha_price = st.number_input("Preço Oreha (UNITÁRIO)", value=32.0, step=0.1, help="Preço de 1 unidade, não do pacote de 10.")
+    oreha_price = st.number_input("Preço Oreha (UNITÁRIO)", value=32.0, step=0.1, help="Preço de 1 unidade que você vende no mercado.")
     craft_cost = st.number_input("Custo Craft (Gold)", value=376, step=1)
     
-    st.markdown("### 🪵 Preços de Materiais (Pacotes de 100)")
+    st.markdown("### 🪵 Preços de Materiais", help="Preço de 100 unidades do valor que está no mercado")
     price_timber_100 = st.number_input("Timber (100un)", value=123)
     price_tender_100 = st.number_input("Tender Timber (100un)", value=267)
     price_abidos_100 = st.number_input("Abidos Timber (100un)", value=1450)
@@ -25,7 +25,7 @@ with st.sidebar:
     tax_rate = 0.05 # 5% fixo
 
     st.markdown("---")
-    st.header("2. Sua Coleta (Inventário)")
+    st.header("2. Sua Coleta (Inventário)", help="Quantidade de materiais que você possui para fazer os crafts.")
     qty_timber = st.number_input("Qtd Timber", value=5000, step=100)
     qty_tender = st.number_input("Qtd Tender", value=1000, step=100)
     qty_abidos = st.number_input("Qtd Abidos", value=200, step=10)
@@ -128,7 +128,7 @@ with tab1:
     fig.update_layout(title='Comparação: Vender Bruto vs Craftar (Otimizado)', barmode='group')
     st.plotly_chart(fig, use_container_width=True)
     
-    st.info(f"**Custo da Energia:** {cost_energy_large:,.0f} gold (Baseado no pacote de 330 BC). Esse valor deve ser descontado do lucro acima para saber o dinheiro real no bolso.")
+    st.info(f"**Custo de uma poção de energia:** {cost_energy_small:,.0f} gold (Baseado no pacote de 230 BC). Esse valor deve ser descontado do lucro acima para saber o dinheiro real no bolso.")
 
 with tab2:
     st.subheader("Otimização de Sobras (NPC Exchange)")
