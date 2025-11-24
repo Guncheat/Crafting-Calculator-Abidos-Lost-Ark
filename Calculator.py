@@ -83,7 +83,7 @@ best_profit_inv, decision_inv, total_crafts_inv, other_val_inv = calculate_optim
 # --- FRONTEND PRINCIPAL ---
 
 # Métricas do Inventário
-col1, col2, col3, col4, col5 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     st.metric("Lucro Potencial (Hoje)", f"{best_profit_inv:,.0f} g", delta=f"{best_profit_inv - other_val_inv:,.0f} vs outra opção")
 with col2:
