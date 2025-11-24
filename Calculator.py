@@ -83,7 +83,7 @@ best_profit_inv, decision_inv, total_crafts_inv, other_val_inv = calculate_optim
 # --- FRONTEND PRINCIPAL ---
 
 # Métricas do Inventário
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(4)
 with col1:
     st.metric("Lucro Potencial (Hoje)", f"{best_profit_inv:,.0f} g", delta=f"{best_profit_inv - other_val_inv:,.0f} vs outra opção")
 with col2:
@@ -95,6 +95,8 @@ with col4:
     # mas mantivemos a lógica de ROI baseada no custo unitário de energia
     roi_bc = (best_profit_inv / 22) * 95 if total_crafts_inv > 0 else 0 
     st.metric("Ref. Preço BC", f"{roi_bc:,.0f}", help="Valor meramente ilustrativo para o inventário atual.")
+with col5:
+    st.metric("Vale apena comprar energia?", "✅ SIM" if roi_bc > bc_price else "❌ NÃO", help="Baseado no ROI estimado.")
 
 st.markdown("---")
 
