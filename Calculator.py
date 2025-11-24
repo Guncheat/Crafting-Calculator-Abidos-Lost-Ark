@@ -113,9 +113,21 @@ with tab1:
 
 with tab2:
     st.info("Esta aba mostra os detalhes matemáticos da aba 1 (Inventário).")
-    # Recalculando apenas para display (ou poderia retornar da função se quisesse expandir)
+    st.subheader("Otimização de Sobras (NPC Exchange)")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.write(f"**Sobras Iniciais:**")
+        st.write(f"Timber: {rem_timber:,.0f}")
+        st.write(f"Tender: {rem_tender:,.0f}")
+    with c2:
+        st.write(f"**Conversão Intermediária:**")
+        st.write(f"Pó Gerado: {total_powder:,.0f}")
+        st.write(f"Novos Abidos: {new_abidos:,.0f}")
+    with c3:
+        st.success(f"**Ganho Real:** +{crafts_extra} Crafts Extras")
+        
+    st.caption("*O cálculo respeita os lotes mínimos de troca (100 Timber -> 80 Pó / 50 Tender -> 80 Pó).")    
     st.write("A lógica interna já converteu suas sobras de Timber/Tender em Pó e adicionou aos crafts totais mostrados acima.")
-
 with tab3:
     st.subheader("Devo Converter ou Vender/Comprar?")
     c_arb1, c_arb2 = st.columns(2)
