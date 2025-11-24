@@ -113,36 +113,54 @@ with tab1:
 
 with tab2:
     st.info("Esta aba mostra os detalhes matemáticos da aba 1 (Inventário).")
+    
+    # --- CÁLCULO LOCAL PARA VISUALIZAÇÃO ---
+    # Recalculamos aqui para mostrar os detalhes, usando os inputs globais
+    crafts_base_disp = int(min(qty_timber / 86, qty_tender / 45, qty_abidos / 33))
+    rem_timber_disp = qty_timber - (crafts_base_disp * 86)
+    rem_tender_disp = qty_tender - (crafts_base_disp * 45)
+    
+    powder_disp = (int(rem_timber_disp / 100) * 80) + (int(rem_tender_disp / 50) * 80)
+    new_abidos_disp = int(powder_disp / 100) * 10
+    crafts_extra_disp = int(new_abidos_disp / 33)
+    # ----------------------------------------
+
     st.subheader("Otimização de Sobras (NPC Exchange)")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.write(f"**Sobras Iniciais:**")
-        st.write(f"Timber: {rem_timber:,.0f}")
-        st.write(f"Tender: {rem_tender:,.0f}")
+        st.write(f"Timber: {rem_timber_disp:,.0f}")
+        st.write(f"Tender: {rem_tender_disp:,.0f}")
     with c2:
         st.write(f"**Conversão Intermediária:**")
-        st.write(f"Pó Gerado: {total_powder:,.0f}")
-        st.write(f"Novos Abidos: {new_abidos:,.0f}")
+        st.write(f"Pó Gerado: {powder_disp:,.0f}")
+        st.write(f"Novos Abidos: {new_abidos_disp:,.0f}")
     with c3:
-        st.success(f"**Ganho Real:** +{crafts_extra} Crafts Extras")
+        st.success(f"**Ganho Real:** +{crafts_extra_disp} Crafts Extras")
         
     st.caption("*O cálculo respeita os lotes mínimos de troca (100 Timber -> 80 Pó / 50 Tender -> 80 Pó).")    
     st.write("A lógica interna já converteu suas sobras de Timber/Tender em Pó e adicionou aos crafts totais mostrados acima.")
+
 with tab3:
     st.subheader("Devo Converter ou Vender/Comprar?")
     c_arb1, c_arb2 = st.columns(2)
     
+    # --- CÁLCULO LOCAL DE ARBITRAGEM ---
     val_10_abidos = 10 * u_abidos
     cost_conv_timber = (125 * u_timber) * (1 - tax_rate)
     cost_conv_tender = (62.5 * u_tender) * (1 - tax_rate)
     
+    decision_timber_disp = "CONVERTER ✅" if cost_conv_timber < val_10_abidos else "VENDER E COMPRAR 💲"
+    decision_tender_disp = "CONVERTER ✅" if cost_conv_tender < val_10_abidos else "VENDER E COMPRAR 💲"
+    # -----------------------------------
+    
     with c_arb1:
-        st.markdown("**Timber:** " + ("✅ CONVERTER" if cost_conv_timber < val_10_abidos else "💲 VENDER/COMPRAR"))
+        st.markdown("**Timber:** " + decision_timber_disp)
         st.caption(f"Custo Conv: {cost_conv_timber:.0f}g vs Mercado: {val_10_abidos:.0f}g")
     with c_arb2:
-        st.markdown("**Tender:** " + ("✅ CONVERTER" if cost_conv_tender < val_10_abidos else "💲 VENDER/COMPRAR"))
+        st.markdown("**Tender:** " + decision_tender_disp)
         st.caption(f"Custo Conv: {cost_conv_tender:.0f}g vs Mercado: {val_10_abidos:.0f}g")
-
+        
 # --- ABA 4: EXPERIMENTAÇÃO (A NOVIDADE) ---
 with tab4:
     st.header("🔬 Análise de ROI (Experimentação)")
