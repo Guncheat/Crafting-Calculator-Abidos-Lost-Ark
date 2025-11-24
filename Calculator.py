@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Lost Ark Calculator - Oreha", layout="wide")
 
-st.title("⚒️ Calculadora Expert de Oreha (Lost Ark)")
+st.title("⚒️ Calculadora Expert de Oreha (Lost Ark)",help="Ferramenta para otimizar lucros com crafting de Oreha usando Timber, Tender e Abidos.Todos os cálculos consideram taxas de mercado e custos de crafting. Use a aba 'Laboratório' para análises de ROI baseadas em runs de coleta.")
 st.markdown("---")
 
 # --- FUNÇÃO DE CÁLCULO (O CÉREBRO DA PLANILHA) ---
@@ -96,7 +96,7 @@ with col4:
     roi_bc = (best_profit_inv / 22) * 95 if total_crafts_inv > 0 else 0 
     st.metric("Ref. Preço BC", f"{roi_bc:,.0f}", help="Valor meramente ilustrativo para o inventário atual.")
 with col5:
-    st.metric("Vale apena comprar energia?", "✅ SIM" if roi_bc > bc_price else "❌ NÃO", help="Baseado no ROI estimado.")
+    st.metric("Vale apena comprar poção de energia?", "✅ SIM" if roi_bc > bc_price else "❌ NÃO", help="Baseado no ROI estimado.")
 
 st.markdown("---")
 
