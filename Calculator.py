@@ -131,7 +131,7 @@ with tab1:
     st.info(f"**Custo de uma poção de energia:** {cost_energy_small:,.0f} gold (Baseado no pacote de 230 BC). Esse valor deve ser descontado do lucro acima para saber o dinheiro real no bolso.")
 
 with tab2:
-    st.subheader("Otimização de Sobras (NPC Exchange)")
+    st.subheader("Otimização de Sobras (NPC Exchange)", help="Detalhes sobre como as sobras de materiais são convertidas em Pó e depois em Abidos adicionais.")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.write(f"**Sobras Iniciais:**")
@@ -147,7 +147,7 @@ with tab2:
     st.caption("*O cálculo respeita os lotes mínimos de troca (100 Timber -> 80 Pó / 50 Tender -> 80 Pó).")
 
 with tab3:
-    st.subheader("Devo Converter ou Vender e Comprar?")
+    st.subheader("Devo Converter ou Vender e Comprar?", help="Análise de Arbitragem entre Converter Madeira em Abidos no NPC ou Vender e Comprar Abidos no Mercado.")
     st.write("Esta análise verifica se queimar madeira no NPC sai mais barato do que comprar Abidos pronto.")
     
     col_arb1, col_arb2 = st.columns(2)
