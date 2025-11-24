@@ -8,181 +8,197 @@ st.set_page_config(page_title="Lost Ark Calculator - Oreha", layout="wide")
 st.title("⚒️ Calculadora Expert de Oreha (Lost Ark)")
 st.markdown("---")
 
-# --- SIDEBAR: INPUTS (Entrada de Dados) ---
+# --- FUNÇÃO DE CÁLCULO (O CÉREBRO DA PLANILHA) ---
+def calculate_optimized_revenue(q_timber, q_tender, q_abidos, u_tim, u_ten, u_abi, price_oreha, cost_craft, tax):
+    """
+    Calcula o lucro máximo possível dado um conjunto de materiais,
+    considerando venda bruta vs craft otimizado com conversão.
+    Retorna: (Lucro Melhor Opção, Descrição da Opção, Dados do Craft)
+    """
+    # 1. Venda Bruta
+    sell_val = ((int(q_timber / 100) * 100) * u_tim + 
+                (int(q_tender / 100) * 100) * u_ten + 
+                (int(q_abidos / 100) * 100) * u_abi) * (1 - tax)
+
+    # 2. Craft Otimizado
+    crafts_base = int(min(q_timber / 86, q_tender / 45, q_abidos / 33))
+    
+    # Sobras
+    rem_timber = q_timber - (crafts_base * 86)
+    rem_tender = q_tender - (crafts_base * 45)
+    
+    # Conversão de Pó
+    powder = (int(rem_timber / 100) * 80) + (int(rem_tender / 50) * 80)
+    new_abidos = int(powder / 100) * 10
+    
+    # Crafts Extras
+    crafts_extra = int(new_abidos / 33)
+    total_crafts = crafts_base + crafts_extra
+    
+    # Receita Craft
+    rev_oreha = (total_crafts * 10 * price_oreha) * (1 - tax)
+    cost_gold = total_crafts * cost_craft
+    profit_craft = rev_oreha - cost_gold
+    
+    # Retorna o melhor valor e detalhes
+    if profit_craft > sell_val:
+        return profit_craft, "CRAFTAR", total_crafts, sell_val
+    else:
+        return sell_val, "VENDER MAT", total_crafts, profit_craft
+
+# --- SIDEBAR: INPUTS GERAIS ---
 with st.sidebar:
     st.header("1. Configuração de Mercado")
-    
-    # Preços Blue Crystal e Energia
     bc_price = st.number_input("Preço Blue Crystal (95un)", value=14000, step=100)
-    oreha_price = st.number_input("Preço Oreha (UNITÁRIO)", value=32.0, step=0.1, help="Preço de 1 unidade que você vende no mercado.")
+    oreha_price = st.number_input("Preço Oreha (UNITÁRIO)", value=32.0, step=0.1)
     craft_cost = st.number_input("Custo Craft (Gold)", value=376, step=1)
     
-    st.markdown("### 🪵 Preços de Materiais", help="Preço de 100 unidades do valor que está no mercado")
+    st.markdown("### 🪵 Preços Materiais (Pacote 100)")
     price_timber_100 = st.number_input("Timber (100un)", value=123)
-    price_tender_100 = st.number_input("Tender Timber (100un)", value=267)
-    price_abidos_100 = st.number_input("Abidos Timber (100un)", value=1450)
+    price_tender_100 = st.number_input("Tender (100un)", value=267)
+    price_abidos_100 = st.number_input("Abidos (100un)", value=1450)
     
-    tax_rate = 0.05 # 5% fixo
+    tax_rate = 0.05 
 
     st.markdown("---")
-    st.header("2. Sua Coleta (Inventário)", help="Quantidade de materiais que você possui para fazer os crafts.")
+    st.header("2. Seu Inventário Atual")
     qty_timber = st.number_input("Qtd Timber", value=5000, step=100)
     qty_tender = st.number_input("Qtd Tender", value=1000, step=100)
     qty_abidos = st.number_input("Qtd Abidos", value=200, step=10)
 
-# --- CÁLCULOS PRINCIPAIS (BACKEND) ---
-
-# 1. Custo da Energia
-# Pacote Pequeno: 230 BC por 10 potes = 23 BC/pote
-cost_energy_small = (bc_price / 95) * 23
-# Pacote Grande: 330 BC por 15 potes = 22 BC/pote (Melhor)
-cost_energy_large = (bc_price / 95) * 22
-
-# 2. Preços Unitários Reais (Base para cálculos)
+# --- PREPARAÇÃO DE DADOS GLOBAIS ---
 u_timber = price_timber_100 / 100
 u_tender = price_tender_100 / 100
 u_abidos = price_abidos_100 / 100
 
-# 3. Cenário A: Venda de Materiais Brutos (Considerando Lotes de 100)
-# Só vende o que tem em pacotes fechados de 100
-sell_timber = (int(qty_timber / 100) * 100) * u_timber
-sell_tender = (int(qty_tender / 100) * 100) * u_tender
-sell_abidos = (int(qty_abidos / 100) * 100) * u_abidos
+# Custo da Energia (Gold)
+cost_energy_small_unit = (bc_price / 95) * (230/10) # 23 BC/pote
+cost_energy_large_unit = (bc_price / 95) * (330/15) # 22 BC/pote
 
-total_sell_raw = (sell_timber + sell_tender + sell_abidos) * (1 - tax_rate)
+# --- CÁLCULO INVENTÁRIO ATUAL (USANDO A FUNÇÃO) ---
+best_profit_inv, decision_inv, total_crafts_inv, other_val_inv = calculate_optimized_revenue(
+    qty_timber, qty_tender, qty_abidos, u_timber, u_tender, u_abidos, oreha_price, craft_cost, tax_rate
+)
 
-# 4. Cenário B: Craft Otimizado (Com Conversão de Sobras)
-# Passo 4.1: Crafts Base (Limitado pelo menor recurso)
-crafts_base = int(min(qty_timber / 86, qty_tender / 45, qty_abidos / 33))
+# --- FRONTEND PRINCIPAL ---
 
-# Passo 4.2: Calcular Sobras após crafts base
-rem_timber = qty_timber - (crafts_base * 86)
-rem_tender = qty_tender - (crafts_base * 45)
-# Abidos sobra quase zero ou o que não deu pra fechar o lote de 33
-
-# Passo 4.3: Conversão de Pó (Regra de Lotes: 100 Timber->80 Pó / 50 Tender->80 Pó)
-powder_from_timber = int(rem_timber / 100) * 80
-powder_from_tender = int(rem_tender / 50) * 80
-total_powder = powder_from_timber + powder_from_tender
-
-# Passo 4.4: Novos Abidos gerados (100 Pó -> 10 Abidos)
-new_abidos = int(total_powder / 100) * 10
-
-# Passo 4.5: Crafts Extras (Assumindo Timber/Tender suficientes para acompanhar, pois sobram muito)
-crafts_extra = int(new_abidos / 33)
-
-total_crafts = crafts_base + crafts_extra
-
-# Receita e Custos do Craft
-# 1 Craft = 10 Orehas
-revenue_oreha = (total_crafts * 10 * oreha_price) * (1 - tax_rate)
-cost_gold_craft = total_crafts * craft_cost
-
-# Lucro Craft (Ignorando custo energia por enquanto para comparar com venda bruta)
-profit_craft_operational = revenue_oreha - cost_gold_craft
-
-# 5. Decisão de Arbitragem (Conversão vs Venda)
-# Custo de oportunidade para gerar 10 Abidos (que custam 10 * u_abidos no mkt)
-market_val_10_abidos = 10 * u_abidos
-
-# Via Timber: Precisa de 125 Timber (1.25 pacotes de 100)
-cost_conv_timber = (125 * u_timber) * (1 - tax_rate) 
-# Via Tender: Precisa de 62.5 Tender (0.625 pacotes de 100)
-cost_conv_tender = (62.5 * u_tender) * (1 - tax_rate)
-
-# Decisões
-decision_timber = "CONVERTER ✅" if cost_conv_timber < market_val_10_abidos else "VENDER E COMPRAR 💲"
-decision_tender = "CONVERTER ✅" if cost_conv_tender < market_val_10_abidos else "VENDER E COMPRAR 💲"
-
-# 6. Max Bid Blue Crystal
-# Pega o melhor cenário (Venda Bruta ou Craft) e divide pelo custo em BC da energia (22 BC)
-best_return = max(total_sell_raw, profit_craft_operational)
-max_bc_price = (best_return / 22) * 95 # 22 é o custo em BC de 1 pote no pacote grande
-
-
-# --- LAYOUT PRINCIPAL (FRONTEND) ---
-
-# Métricas Principais
+# Métricas do Inventário
 col1, col2, col3, col4 = st.columns(4)
-
 with col1:
-    st.metric("Lucro Líquido (Craft)", f"{profit_craft_operational:,.0f} g", delta=f"{profit_craft_operational - total_sell_raw:,.0f} vs Venda")
+    st.metric("Lucro Potencial (Hoje)", f"{best_profit_inv:,.0f} g", delta=f"{best_profit_inv - other_val_inv:,.0f} vs outra opção")
 with col2:
-    st.metric("Melhor Decisão", "CRAFTAR" if profit_craft_operational > total_sell_raw else "VENDER MAT")
+    st.metric("Melhor Ação", decision_inv)
 with col3:
-    st.metric("Crafts Totais", f"{total_crafts}", help=f"Base: {crafts_base} + Extras Conversão: {crafts_extra}")
+    st.metric("Crafts Totais", f"{total_crafts_inv}")
 with col4:
-    st.metric("Max Pagar no BC", f"{max_bc_price:,.0f}", delta=f"{max_bc_price - bc_price:,.0f} Margem")
+    # Max BC Price baseado no inventário não faz tanto sentido quanto na experimentação, 
+    # mas mantivemos a lógica de ROI baseada no custo unitário de energia
+    roi_bc = (best_profit_inv / 22) * 95 if total_crafts_inv > 0 else 0 
+    st.metric("Ref. Preço BC", f"{roi_bc:,.0f}", help="Valor meramente ilustrativo para o inventário atual.")
 
 st.markdown("---")
 
-# Abas de Análise
-tab1, tab2, tab3 = st.tabs(["📊 Comparativo Visual", "🏭 Detalhes da Conversão", "⚖️ Arbitragem de Mercado"])
+# Abas
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Comparativo", "🏭 Detalhes Conversão", "⚖️ Arbitragem", "🧪 Laboratório (ROI)"])
 
 with tab1:
-    # Gráfico de Barras comparando Venda vs Craft
     fig = go.Figure(data=[
-        go.Bar(name='Venda Materiais', x=['Retorno Gold'], y=[total_sell_raw], marker_color='#FFA07A'),
-        go.Bar(name='Craft Otimizado', x=['Retorno Gold'], y=[profit_craft_operational], marker_color='#90EE90')
+        go.Bar(name='Venda Materiais', x=['Retorno Gold'], y=[other_val_inv if decision_inv == "CRAFTAR" else best_profit_inv], marker_color='#FFA07A'),
+        go.Bar(name='Melhor Opção', x=['Retorno Gold'], y=[best_profit_inv], marker_color='#90EE90')
     ])
-    fig.update_layout(title='Comparação: Vender Bruto vs Craftar (Otimizado)', barmode='group')
+    fig.update_layout(title='Comparação: Otimização do Inventário', barmode='group')
     st.plotly_chart(fig, use_container_width=True)
-    
-    st.info(f"**Custo de uma poção de energia:** {cost_energy_small:,.0f} gold (Baseado no pacote de 230 BC). Esse valor deve ser descontado do lucro acima para saber o dinheiro real no bolso.")
 
 with tab2:
-    st.subheader("Otimização de Sobras (NPC Exchange)", help="Detalhes sobre como as sobras de materiais são convertidas em Pó e depois em Abidos adicionais.")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.write(f"**Sobras Iniciais:**")
-        st.write(f"Timber: {rem_timber:,.0f}")
-        st.write(f"Tender: {rem_tender:,.0f}")
-    with c2:
-        st.write(f"**Conversão Intermediária:**")
-        st.write(f"Pó Gerado: {total_powder:,.0f}")
-        st.write(f"Novos Abidos: {new_abidos:,.0f}")
-    with c3:
-        st.success(f"**Ganho Real:** +{crafts_extra} Crafts Extras")
-        
-    st.caption("*O cálculo respeita os lotes mínimos de troca (100 Timber -> 80 Pó / 50 Tender -> 80 Pó).")
+    st.info("Esta aba mostra os detalhes matemáticos da aba 1 (Inventário).")
+    # Recalculando apenas para display (ou poderia retornar da função se quisesse expandir)
+    st.write("A lógica interna já converteu suas sobras de Timber/Tender em Pó e adicionou aos crafts totais mostrados acima.")
 
 with tab3:
-    st.subheader("Devo Converter ou Vender e Comprar?", help="Análise de Arbitragem entre Converter Madeira em Abidos no NPC ou Vender e Comprar Abidos no Mercado.")
-    st.write("Esta análise verifica se queimar madeira no NPC sai mais barato do que comprar Abidos pronto.")
+    st.subheader("Devo Converter ou Vender/Comprar?")
+    c_arb1, c_arb2 = st.columns(2)
     
-    col_arb1, col_arb2 = st.columns(2)
+    val_10_abidos = 10 * u_abidos
+    cost_conv_timber = (125 * u_timber) * (1 - tax_rate)
+    cost_conv_tender = (62.5 * u_tender) * (1 - tax_rate)
     
-    with col_arb1:
-        st.markdown("#### Timber (Madeira Comum)")
-        st.write(f"Custo Oportunidade (Vender): **{cost_conv_timber:.1f}g**")
-        st.write(f"Valor 10 Abidos (Comprar): **{market_val_10_abidos:.1f}g**")
-        if decision_timber == "CONVERTER ✅":
-            st.success(f"Decisão: **{decision_timber}**")
-        else:
-            st.warning(f"Decisão: **{decision_timber}**")
-            
-    with col_arb2:
-        st.markdown("#### Tender (Madeira Incomum)")
-        st.write(f"Custo Oportunidade (Vender): **{cost_conv_tender:.1f}g**")
-        st.write(f"Valor 10 Abidos (Comprar): **{market_val_10_abidos:.1f}g**")
-        if decision_tender == "CONVERTER ✅":
-            st.success(f"Decisão: **{decision_tender}**")
-        else:
-            st.warning(f"Decisão: **{decision_tender}**")
+    with c_arb1:
+        st.markdown("**Timber:** " + ("✅ CONVERTER" if cost_conv_timber < val_10_abidos else "💲 VENDER/COMPRAR"))
+        st.caption(f"Custo Conv: {cost_conv_timber:.0f}g vs Mercado: {val_10_abidos:.0f}g")
+    with c_arb2:
+        st.markdown("**Tender:** " + ("✅ CONVERTER" if cost_conv_tender < val_10_abidos else "💲 VENDER/COMPRAR"))
+        st.caption(f"Custo Conv: {cost_conv_tender:.0f}g vs Mercado: {val_10_abidos:.0f}g")
 
+# --- ABA 4: EXPERIMENTAÇÃO (A NOVIDADE) ---
+with tab4:
+    st.header("🔬 Análise de ROI (Experimentação)")
+    st.markdown("Preencha aqui os dados de uma 'run' de teste (ex: gastando 10 potes) para saber o preço justo do cristal.")
+    
+    # Inputs da Experimentação (Separados do Inventário)
+    c_exp1, c_exp2, c_exp3, c_exp4 = st.columns(4)
+    with c_exp1:
+        exp_pots = st.number_input("Potes Usados", value=10, step=1)
+    with c_exp2:
+        exp_timber = st.number_input("Timber Coletado", value=18011) # Valor padrão do seu CSV
+    with c_exp3:
+        exp_tender = st.number_input("Tender Coletado", value=3918)
+    with c_exp4:
+        exp_abidos = st.number_input("Abidos Coletado", value=1065)
+        
     st.markdown("---")
-    st.subheader("Vale a pena comprar Materiais para Craftar?")
     
-    # Custo para comprar mat para 1 craft
-    cost_buy_mats = (86 * u_timber) + (45 * u_tender) + (33 * u_abidos)
-    total_cost_buy_craft = cost_buy_mats + craft_cost
-    revenue_1_craft = (10 * oreha_price) * (1 - tax_rate)
-    profit_buy_craft = revenue_1_craft - total_cost_buy_craft
+    # Cálculos da Experimentação
+    # Usamos a mesma função "inteligente" para descobrir quanto dinheiro esses materiais geram no melhor cenário
+    exp_revenue, exp_strategy, exp_crafts, _ = calculate_optimized_revenue(
+        exp_timber, exp_tender, exp_abidos, u_timber, u_tender, u_abidos, oreha_price, craft_cost, tax_rate
+    )
     
-    st.write(f"Custo para fazer 1 Craft (Comprando tudo): **{total_cost_buy_craft:,.1f}g**")
-    st.write(f"Receita Líquida de 1 Craft (10 Orehas): **{revenue_1_craft:,.1f}g**")
+    # Análise por Pote
+    gold_per_pot = exp_revenue / exp_pots
+    cost_per_pot_actual = cost_energy_large_unit # Custo atual baseado no BC de 14k
+    profit_per_pot = gold_per_pot - cost_per_pot_actual
     
-    if profit_buy_craft > 0:
-        st.success(f"**SIM! Lucro de {profit_buy_craft:.1f}g por unidade de crafting.** COMPRE TUDO AGORA!")
-    else:
-        st.error(f"**NÃO.** Prejuízo de {profit_buy_craft:.1f}g se comprar materiais.")
+    # Break Even (Preço Justo)
+    # Fórmula: (Ouro gerado por 1 pote / Custo em BC de 1 pote) * 95
+    fair_value_small = (gold_per_pot / 23) * 95 # Pacote 10 (230 BC) = 23 BC/pote
+    fair_value_large = (gold_per_pot / 22) * 95 # Pacote 15 (330 BC) = 22 BC/pote
+    
+    # Display dos Resultados da Experiência
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric("Receita Total (Run)", f"{exp_revenue:,.0f} g", help="Valor bruto gerado pelos materiais (Melhor cenário)")
+    with m2:
+        st.metric("Receita Média / Pote", f"{gold_per_pot:,.0f} g", help="Quanto cada pote gerou de ouro")
+    with m3:
+        if profit_per_pot > 0:
+            st.success(f"Lucro Real: +{profit_per_pot:,.0f} g/pote")
+        else:
+            st.error(f"Prejuízo: {profit_per_pot:,.0f} g/pote")
+
+    st.subheader("🏷️ Qual o preço justo do Blue Crystal?")
+    st.caption("Se o preço do mercado estiver ABAIXO destes valores, vale a pena comprar o pacote.")
+
+    col_res1, col_res2 = st.columns(2)
+    
+    with col_res1:
+        st.markdown("#### Pacote Pequeno (10 un)")
+        st.metric("Valor Justo (Break-even)", f"{fair_value_small:,.0f}", delta=f"{fair_value_small - bc_price:,.0f} Margem")
+        if bc_price < fair_value_small:
+            st.success("✅ COMPRA SEGURA")
+        else:
+            st.error("❌ NÃO COMPRE")
+            
+    with col_res2:
+        st.markdown("#### Pacote Grande (15 un)")
+        st.metric("Valor Justo (Break-even)", f"{fair_value_large:,.0f}", delta=f"{fair_value_large - bc_price:,.0f} Margem")
+        if bc_price < fair_value_large:
+            st.success("✅ COMPRA SEGURA")
+        else:
+            st.error("❌ NÃO COMPRE")
+            
+    st.info(f"""
+    **Análise:**
+    Com os materiais coletados, cada pote de energia rendeu **{gold_per_pot:,.0f} gold**.
+    Considerando a eficiência do pacote grande (22 BC/pote), você poderia pagar até **{fair_value_large:,.0f} gold** no Blue Crystal e ainda sair no zero a zero.
+    Como o mercado está **{bc_price:,.0f}**, você tem um lucro "infinito" comprando energia agora.
+    """)
